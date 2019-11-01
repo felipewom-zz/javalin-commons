@@ -24,6 +24,14 @@ fun Any?.toMap(): Map<String, Any>? {
 }
 
 
+fun <K, V> Map<K, V>.asCookieString(): String {
+    var str = ""
+    for (map in this) {
+        str += "${map.key}=${map.value.toString()};"
+    }
+    return str
+}
+
 fun groupArgs(vararg args: Any?): String {
     var groupedArgs = ""
     for (arg in args) {

@@ -8,6 +8,7 @@ import com.google.gson.FieldAttributes
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.Expose
+import com.google.gson.reflect.TypeToken
 
 object GsonUtils {
     @JvmStatic
@@ -51,8 +52,9 @@ object GsonUtils {
     }
 
     @JvmStatic
-    inline fun <reified T : Any> deserialize(str: String): T? = try {
-        gson.fromJson(str, T::class.java)
+    inline fun <reified DTO : Any> deserialize(str: String): DTO? = try {
+        val type = object : TypeToken<DTO>() {}.type
+        gson.fromJson(str, type)
     } catch (e: Exception) {
         logger.error("[ERROR]GsonUtils::deserialize=>${e.message}")
         null

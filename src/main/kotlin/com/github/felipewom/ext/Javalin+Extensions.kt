@@ -8,6 +8,8 @@ import com.github.felipewom.i18n.I18nPtBRDefault
 import com.github.felipewom.security.Roles
 import com.github.felipewom.springboot.HealthHandler
 import com.github.felipewom.utils.GsonUtils
+import com.github.felipewom.utils.gson.ListOfJson
+import com.google.gson.Gson
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder
 import io.javalin.core.JavalinConfig
@@ -38,6 +40,22 @@ import java.rmi.activation.UnknownObjectException
 @Throws(BadRequestResponse::class)
 inline fun <reified T : Any?> Context.getParamIdValidator(): Validator<T> =
     this.pathParam(com.github.felipewom.commons.ApiConstants.ID, T::class.java)
+
+inline fun <reified DTO : Any> Context.bodyAsList(): List<DTO>? {
+    return try {
+        val deserialized: List<DTO> = Gson().fromJson(this.body(), ListOfJson<DTO>(DTO::class.java))
+        return deserialized
+    } catch (e: Exception) {
+        logger.error("[ERROR]GsonUtils::deserialize=>${e.message}")
+        null
+    }
+}
+
+inline fun <reified DTO : Any> Context.bodyAsListValidator() = try {
+    Validator(this.bodyAsList<DTO>(), "Request body as ${DTO::class.simpleName}")
+} catch (e: Exception) {
+    throw BadRequestResponse("Couldn't deserialize body to ${DTO::class.simpleName}")
+}
 
 fun <T> Context.getPageable(): Pageable<T> = use(Pageable<T>()::class.java)
 
@@ -112,25 +130,38 @@ fun Context.failureWith(error: ResultHandler.Failure?) {
     }
 }
 
+
+fun Context.getCookie(): String {
+    val cookieMap = this.cookieMap()
+    if(cookieMap.isNullOrEmpty()){
+        return ""
+    }
+    return cookieMap.asCookieString()
+}
+
 fun Context.getTenantId(): String? = this.header(com.github.felipewom.commons.ApiConstants.TENANT_KEY_HEADER)
 
 fun Context.getSSOFromJwt(): Map<String, String> {
     val principal = this.getJWTId()
     val ssoToken = this.getJWTPrincipal()
-    val cookieToken = "${com.github.felipewom.commons.ApiConstants.J_COOKIE_NAME}=$ssoToken;${com.github.felipewom.commons.ApiConstants.SP_COOKIE_NAME}=$principal;"
+    val cookieToken =
+        "${com.github.felipewom.commons.ApiConstants.J_COOKIE_NAME}=$ssoToken;${com.github.felipewom.commons.ApiConstants.SP_COOKIE_NAME}=$principal;"
     return mapOf(com.github.felipewom.commons.ApiConstants.COOKIE to cookieToken)
 }
 
 fun Context.getJWTPrincipal(): String =
     this.attribute<String>(com.github.felipewom.commons.ApiConstants.JWT_SUBJECT_ATTR) ?: throw UnauthorizedResponse()
 
-fun Context.getJWTId(): String = this.attribute<String>(com.github.felipewom.commons.ApiConstants.JWT_CLAIM_ID_ATTR) ?: throw UnauthorizedResponse()
+fun Context.getJWTId(): String =
+    this.attribute<String>(com.github.felipewom.commons.ApiConstants.JWT_CLAIM_ID_ATTR) ?: throw UnauthorizedResponse()
 
 fun Context.getJWTEmail(): String =
-    this.attribute<String>(com.github.felipewom.commons.ApiConstants.JWT_CLAIM_EMAIL_ATTR) ?: throw UnauthorizedResponse()
+    this.attribute<String>(com.github.felipewom.commons.ApiConstants.JWT_CLAIM_EMAIL_ATTR)
+        ?: throw UnauthorizedResponse()
 
 fun Context.getJWTPrincipalOrThrow(): String =
-    this.attribute<String>(com.github.felipewom.commons.ApiConstants.JWT_CLAIM_EMAIL_ATTR) ?: throw UnauthorizedResponse()
+    this.attribute<String>(com.github.felipewom.commons.ApiConstants.JWT_CLAIM_EMAIL_ATTR)
+        ?: throw UnauthorizedResponse()
 
 fun Context.getJWT(): String {
     return this.header(com.github.felipewom.commons.ApiConstants.JWT_AUTHORIZATION_HEADER)?.let { it.split("${com.github.felipewom.commons.ApiConstants.JWT_BEARER_TOKEN} ")[1] }
@@ -217,7 +248,10 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
 fun Context.isPermittedRoute(permittedRoles: Set<Role>): Boolean {
     val appProperties: com.github.felipewom.commons.AppProperties by GlobalContext.get().koin.inject()
     val isSwaggerAvailable = appProperties.env.isDev() && (
-            this.path().equals(appProperties.env.context+ com.github.felipewom.commons.ApiConstants.OVERVIEW_PATH, true) ||
+            this.path().equals(
+                appProperties.env.context + com.github.felipewom.commons.ApiConstants.OVERVIEW_PATH,
+                true
+            ) ||
                     this.path().equals(appProperties.env.swaggerContextPath, true) ||
                     this.path().equals(appProperties.env.swaggerJsonPath, true)
             )
