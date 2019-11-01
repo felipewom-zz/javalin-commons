@@ -13,18 +13,25 @@ The classes were made to help javalin development, built with:
         + internationalization
       + utils/
           Extension functions
-          ResultHandlers class - Success(T) where T is a class representation of the value or  Failure(errMsg, err) with errMsg as error message and err as throwable
+          ResultHandlers<T> class - Success(T) where T is a class representation of the value or  Failure(errMsg, err) with errMsg as error message and err as throwable
           Pageable class - pagination class
           GsonUtils - serialization/deserialization helper
           HttpFuel - Http client 
 
 # Getting started
 
-You need just JVM installed. (`jdk8`)
+You need add dependency. 
+
+```
+<dependency>
+    <groupId>com.github.felipewom</groupId>
+    <artifactId>javalin-commons</artifactId>
+    <version>1.0.0−RC2</version>
+</dependency>
+```
 
 You can improve the content and test locally with:
 > mvn clean install
-
 
 ```
 Made by @felipewom
