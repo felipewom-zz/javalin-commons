@@ -33,6 +33,9 @@ You need add dependency.
 You can improve the content and test locally with:
 > mvn clean install
 
+Promote version and deploy
+> make deploy version=1.0.0−RC6
+
 ```
 Made by @felipewom
 ```
