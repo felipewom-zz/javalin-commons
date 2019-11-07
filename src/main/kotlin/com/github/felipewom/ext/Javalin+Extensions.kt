@@ -57,12 +57,12 @@ inline fun <reified DTO : Any> Context.bodyAsListValidator() = try {
     throw BadRequestResponse("Couldn't deserialize body to ${DTO::class.simpleName}")
 }
 
-fun <T> Context.getPageable(): Pageable<T> = use(Pageable<T>()::class.java)
+fun Context.getPageable(): Pageable = use(Pageable::class.java)
 
 fun Context.getPageableExposed(): PageableExposed = use(PageableExposed()::class.java)
 
-fun <T> Context.getPageableValidator(): Validator<Pageable<T>> {
-    val pageable = this.use(Pageable<T>()::class.java)
+fun Context.getPageableValidator(): Validator<Pageable> {
+    val pageable = this.use(Pageable::class.java)
     return Validator(pageable)
 }
 
@@ -71,7 +71,7 @@ fun Context.getPageablePageableExposedValidator(): Validator<PageableExposed> {
     return Validator(pageable)
 }
 
-inline fun <reified T : Any> Context.deserializePageable(): Pageable<T> {
+fun Context.deserializePageable(): Pageable {
     return Pageable(this)
 }
 
@@ -185,7 +185,7 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
     javalin.registerExceptionHandlers()
     registerValidations()
     javalin.before { ctx ->
-        ctx.register(Pageable::class.java, ctx.deserializePageable<Any>())
+        ctx.register(Pageable::class.java, ctx.deserializePageable())
         ctx.register(PageableExposed::class.java, ctx.deserializePageableExposed())
     }
     javalin.routes {

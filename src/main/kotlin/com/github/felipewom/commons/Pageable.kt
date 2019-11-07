@@ -11,7 +11,7 @@ import io.javalin.http.Context
  * Data class for pagination information.
  * @author Felipe Moura
  */
-open class Pageable<DTO>(@Expose(deserialize = false) var totalSize: Int = 0 ) {
+open class Pageable(@Expose(deserialize = false) var totalSize: Int = 0 ) {
 
     constructor() : this(0)
     constructor(ctx: Context): this(0){
@@ -75,9 +75,9 @@ open class Pageable<DTO>(@Expose(deserialize = false) var totalSize: Int = 0 ) {
 
     /**
      * Returns the list of DTO requested.
-     * @return
+     * @return List<Any>
      */
-    var result: List<DTO> = emptyList()
+    var result: List<Any> = emptyList()
 
     /**
      * Returns the serialized DTO requested.
@@ -109,7 +109,7 @@ open class Pageable<DTO>(@Expose(deserialize = false) var totalSize: Int = 0 ) {
      * Returns the DTO requested.
      * @return
      */
-    fun <DTO> getObjectFilter(clzz: Class<DTO>): DTO? = tryOrNull {
+    inline fun <DTO> getObjectFilter(clzz: Class<DTO>): DTO? = tryOrNull {
         if (objectFilter != null) {
             return deserialize(objectFilter!!, clzz)
         }
