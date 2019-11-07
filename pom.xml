@@ -6,7 +6,7 @@
     <artifactId>javalin-commons</artifactId>
     <name>Javalin Commons Library</name>
     <description>Commons extensions to help Javalin Development</description>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
     <url>https://github.com/felipewom/javalin-commons</url>
     <organization>

@@ -2,6 +2,7 @@
 
 package com.github.felipewom.i18n
 
+import com.github.felipewom.commons.ApiConstants.ROOT_PACKAGE
 import io.javalin.http.Context
 
 /*
@@ -14,11 +15,11 @@ object I18nProvider {
     const val ACCEPT_LANG = "Accept-Language"
     const val COMMA_SEPARATOR = ","
     const val SEMICOLON = ";"
-    const val PT_BR_INTL = "com.github.felipewom.i18n.I18nPtBR"
-    const val EN_US_INTL = "com.github.felipewom.i18n.I18nEnUS"
+    val PT_BR_INTL = "${ROOT_PACKAGE}.i18n.I18nPtBR"
+    val EN_US_INTL = "${ROOT_PACKAGE}.i18n.I18nEnUS"
     fun get(str: String, ctx: Context): String {
         try {
-            val lang = ctx.header(ACCEPT_LANG)?.let { it.split(SEMICOLON).firstOrNull() } ?: EN_US
+            val lang = ctx.header(ACCEPT_LANG)?.split(SEMICOLON)?.firstOrNull() ?: EN_US
             val langName = if (lang.contains(COMMA_SEPARATOR)) {
                 lang.substring(0, lang.indexOf(COMMA_SEPARATOR))
             } else {
