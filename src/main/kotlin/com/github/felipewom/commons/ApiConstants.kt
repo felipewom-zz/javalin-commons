@@ -19,22 +19,17 @@ object ApiConstants {
     /**
      * Application Constants
      * */
-
-
     const val OVERVIEW_PATH = "/overview"
-    const val URL_SISTEMA = "URL_SISTEMA"
-    const val ROOT_PACKAGE = "com.github.felipewom"
     const val TZ_SAO_PAULO = "America/Sao_Paulo"
     const val TZ_UTC = "UTC"
     const val CREATED_AT = "created_at"
     const val UPDATED_AT = "updated_at"
-    const val FL_SIM: Char = 'S'
-    const val FL_NAO: Char = 'N'
     const val ID: String = "id"
     const val PARAM_SEPARATOR = "§" // ¤ ∞
     @JvmStatic
+    val ROOT_PACKAGE = getEnvironmentProp("ROOT_PACKAGE") ?: "com.github.felipewom"
+    @JvmStatic
     val DB_SCHEMA = getEnvironmentProp("DB_SCHEMA")
-
 
     /*
     * HTTP Constants
@@ -63,19 +58,18 @@ object ApiConstants {
     const val CONTENT_LENGTH = "Content-Length"
     const val CONTENT_LOCATION = "Content-Location"
     const val CONTENT_RANGE = "Content-Range"
+    const val USER_AGENT = "User-Agent"
     const val CONTENT_TYPE = "Content-Type"
     const val COOKIE = "Cookie"
-    const val USER_AGENT = "User-Agent"
-    const val SP_COOKIE_NAME = "SPJSSOID"
-    const val J_COOKIE_NAME = "JSESSIONID"
+    const val SESSION_COOKIE = "__session"
     const val API_VERSION_HEADER = "Api-Version"
     const val JSON_MIME = "application/json"
     val ACCEPT_JSON = Pair(
-        com.github.felipewom.commons.ApiConstants.ACCEPT, com.github.felipewom.commons.ApiConstants.JSON_MIME
+        ACCEPT, JSON_MIME
     )
     val CONTENT_TYPE_JSON = Pair(
-        com.github.felipewom.commons.ApiConstants.CONTENT_TYPE,
-        com.github.felipewom.commons.ApiConstants.JSON_MIME
+        CONTENT_TYPE,
+        JSON_MIME
     )
 
     /*HTTP STATUS*/

@@ -4,12 +4,20 @@ package com.github.felipewom.commons
 import com.github.felipewom.ext.calculateOffset
 import com.github.felipewom.ext.isNotNullOrBlank
 import com.google.gson.annotations.Expose
+import io.javalin.http.Context
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SortOrder
 
 class PageableExposed(@Expose(deserialize = false) var totalSize: Int = 0) {
 
     constructor() : this(0)
+    constructor(ctx: Context): this(0){
+        this.pageNumber = ctx.queryParam(PageableFields.PAGE_NUMBER)?.toInt() ?: 1
+        this.pageSize = ctx.queryParam(PageableFields.PAGE_SIZE)?.toInt() ?: 20
+        this.orderBy = ctx.queryParam(PageableFields.ORDER_BY)
+        this.filter = ctx.queryParam(PageableFields.FILTER)
+        this.objectFilter = ctx.queryParam(PageableFields.OBJECT_FILTER)
+    }
 
     /**
      * Page number requested.

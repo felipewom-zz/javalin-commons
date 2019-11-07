@@ -1,3 +1,5 @@
 package com.github.felipewom.commons
 
-var logger = org.slf4j.LoggerFactory.getLogger(com.github.felipewom.commons.ApiConstants.ROOT_PACKAGE)
+import com.github.felipewom.ext.getEnvironmentProp
+
+var logger = org.slf4j.LoggerFactory.getLogger(ApiConstants.ROOT_PACKAGE)

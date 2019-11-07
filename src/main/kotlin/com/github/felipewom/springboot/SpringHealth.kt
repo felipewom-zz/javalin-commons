@@ -16,7 +16,7 @@ data class SpringHealth(val status: String, val details: Map<String, Any>) {
 
 object HealthHandler : KoinComponent {
     private val dataSource: DataSource by inject()
-    private val appProps: com.github.felipewom.commons.AppProperties by inject()
+    private val appProps: AppProperties by inject()
 
     @OpenApi(
         ignore = true

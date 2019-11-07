@@ -5,6 +5,7 @@ import com.github.felipewom.ext.isNotNullOrBlank
 import com.github.felipewom.ext.tryOrNull
 import com.github.felipewom.utils.GsonUtils.deserialize
 import com.google.gson.annotations.Expose
+import io.javalin.http.Context
 
 /**
  * Data class for pagination information.
@@ -13,6 +14,13 @@ import com.google.gson.annotations.Expose
 open class Pageable<DTO>(@Expose(deserialize = false) var totalSize: Int = 0 ) {
 
     constructor() : this(0)
+    constructor(ctx: Context): this(0){
+        this.pageNumber = ctx.queryParam(PageableFields.PAGE_NUMBER)?.toInt() ?: 1
+        this.pageSize = ctx.queryParam(PageableFields.PAGE_SIZE)?.toInt() ?: 20
+        this.orderBy = ctx.queryParam(PageableFields.ORDER_BY)
+        this.filter = ctx.queryParam(PageableFields.FILTER)
+        this.objectFilter = ctx.queryParam(PageableFields.OBJECT_FILTER)
+    }
 
     /**
      * Page number requested.
