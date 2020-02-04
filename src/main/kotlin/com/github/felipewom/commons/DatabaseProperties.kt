@@ -59,4 +59,10 @@ data class DatabaseProperties(
     override fun toString(): String {
         return "-> DatabaseProperties:\njdbcUrl='$jdbcUrl', \nusername='$username', \npassword='$password', \nminimumIdle=$minimumIdle, \nidleTimeout=$idleTimeout, \nmaxLifeTime=$maxLifeTime, \nisAutoCommit=$isAutoCommit, \ndriverClassName='$driverClassName', \nmaximumPoolSize=$maximumPoolSize, \ntransactionIsolation='$transactionIsolation', \nconnectionTestQuery='$connectionTestQuery'"
     }
+
+    fun print(){
+        for (str in this.toString().split("\n")) {
+            logger.info("$str")
+        }
+    }
 }

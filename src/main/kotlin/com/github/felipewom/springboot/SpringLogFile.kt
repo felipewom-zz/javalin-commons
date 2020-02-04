@@ -1,6 +1,10 @@
 package com.github.felipewom.springboot
 
+import com.github.felipewom.ext.badRequest
 import io.javalin.http.Context
+import org.apache.log4j.Appender
+import org.apache.log4j.FileAppender
+import org.apache.log4j.Logger
 import org.eclipse.jetty.http.HttpStatus
 import java.io.File
 import java.io.IOException
@@ -12,7 +16,11 @@ object SpringLogFile {
     @JvmStatic
     fun getLogFile(ctx: Context) {
         val contentRangeHeader = "Content-Range"
-        val file = File("/var/log/template-api/server.log")
+        val filePath = getLoggerFilePath()
+        if(filePath.isNullOrBlank()){
+            return ctx.badRequest("Log file not found.")
+        }
+        val file = File(filePath)
         val totalBytes = file.length().toInt()
         val contentRange = ctx.req.getHeader("Range")
         var lastSize = contentRange?.let { contentRange.split("bytes=").let { it[1] }.replace("-", "") } ?: "0"
@@ -33,6 +41,17 @@ object SpringLogFile {
                 .header(contentRangeHeader, "bytes $totalBytes/$totalBytes")
                 .json(result)
         }
+    }
+
+    private fun getLoggerFilePath() : String?{
+        val allAppenders = Logger.getRootLogger().allAppenders
+        while (allAppenders.hasMoreElements()) {
+            val app = allAppenders.nextElement() as Appender
+            if (app is FileAppender) {
+                return  app.file
+            }
+        }
+        return null
     }
 
     @Throws(IOException::class)

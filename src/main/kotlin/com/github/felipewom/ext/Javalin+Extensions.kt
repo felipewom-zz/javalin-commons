@@ -1,7 +1,6 @@
 package com.github.felipewom.ext
 
 import com.github.felipewom.commons.*
-import com.github.felipewom.i18n.I18nEnUSDefault
 import com.github.felipewom.i18n.I18nKeys
 import com.github.felipewom.i18n.I18nProvider
 import com.github.felipewom.i18n.I18nPtBRDefault
@@ -30,9 +29,10 @@ import io.javalin.plugin.openapi.jackson.JacksonToJsonMapper
 import io.javalin.plugin.openapi.ui.SwaggerOptions
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.media.Content
+import io.swagger.v3.oas.models.media.MediaType
 import org.eclipse.jetty.http.HttpStatus
 import org.jetbrains.exposed.exceptions.ExposedSQLException
-import org.koin.core.context.GlobalContext
 import org.koin.core.context.stopKoin
 import java.rmi.activation.UnknownObjectException
 
@@ -121,7 +121,7 @@ fun Context.failureWith(error: ResultHandler.Failure?) {
 
 fun Context.getCookie(): String {
     val cookieMap = this.cookieMap()
-    if(cookieMap.isNullOrEmpty()){
+    if (cookieMap.isNullOrEmpty()) {
         return ""
     }
     return cookieMap.asCookieString()
@@ -134,6 +134,9 @@ fun Context.getCookieFromJwt(): Map<String, String> {
     val cookieToken = "${ApiConstants.SESSION_COOKIE}=$token;"
     return mapOf(ApiConstants.COOKIE to cookieToken)
 }
+
+
+fun Context.getPrincipal(): String = this.getJWTPrincipal()
 
 fun Context.getJWTPrincipal(): String =
     this.attribute<String>(ApiConstants.JWT_SUBJECT_ATTR) ?: throw UnauthorizedResponse()
@@ -168,7 +171,7 @@ val toJsonMapper = object : ToJsonMapper {
 
 fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
     val anonymousRoutes: Set<Role> = SecurityUtil.roles(Roles.ANYONE)
-    val appProperties: AppProperties by GlobalContext.get().koin.inject()
+    val appProperties: AppProperties by injectDependency()
     val javalin = Javalin.create { config ->
         config.registerPlugin(RouteOverviewPlugin(ApiConstants.OVERVIEW_PATH));
         config.registerPlugin(OpenApiPlugin(getOpenApiOptions(appProperties)));
@@ -177,7 +180,9 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
         config.autogenerateEtags = true
         config.defaultContentType = ApiConstants.JSON_MIME
         // set debug logging if env variable ENV=development is present
-        config.enableDevLogging()
+        if (appProperties.env.isDev() || appProperties.env.isTest()) {
+            config.enableDevLogging()
+        }
         appDeclaration(config)
     }
     // configure json object mapper
@@ -195,9 +200,11 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
                 io.javalin.plugin.openapi.dsl.documented(
                     documentation = OpenApiDocumentation()
                         .result<String>(
-                            "200",
+                            "${HttpStatus.OK_200}",
                             applyUpdates = {
-                                it.description(I18nEnUSDefault.translate.getValue(I18nKeys.application_version))
+                                val mediaType = MediaType()
+                                mediaType.example = "pong!"
+                                it.content = Content().addMediaType("text/html", mediaType)
                             }
                         )
                 ) { it.result("pong!") },
@@ -205,24 +212,21 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
             )
             ApiBuilder.path("admin") {
                 ApiBuilder.get("info", HealthHandler::info, route)
-                ApiBuilder.get("health", HealthHandler::healthCheck, route)
-                ApiBuilder.get("logfile", HealthHandler::logFile, route)
-                ApiBuilder.head("logfile", HealthHandler::headLogFile, route)
             }
         }
     }
     javalin.after { ctx ->
-        ctx.header("Server", "Powered by EMPREEND.ME")
+        ctx.header("Server", "Powered by ${getProperty<String>("powered_by")}")
         ctx.header(ApiConstants.API_VERSION_HEADER, appProperties.env.projectVersion)
     }
     javalin.events {
         it.serverStarting {
             logger.info("Server is starting in ${appProperties.env.stage.toUpperCase()}")
-            logger.info("\n____________________________________________________")
-            logger.info("\n${appProperties.env}")
-            logger.info("\n____________________________________________________")
-            logger.info("\n${appProperties.db}")
-            logger.info("\n____________________________________________________")
+            logger.info("____________________________________________________")
+            appProperties.env.print()
+            logger.info("____________________________________________________")
+            logger.info("DEFAULT_TIMEZONE:${DEFAULT_TIMEZONE}")
+            logger.info("____________________________________________________")
         }
         it.serverStopping {
             stopKoin()
@@ -232,7 +236,7 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
 }
 
 fun Context.isPermittedRoute(permittedRoles: Set<Role>): Boolean {
-    val appProperties: AppProperties by GlobalContext.get().koin.inject()
+    val appProperties: AppProperties by injectDependency()
     val isSwaggerAvailable = appProperties.env.isDev() && (
             this.path().equals(
                 appProperties.env.context + ApiConstants.OVERVIEW_PATH,
@@ -251,8 +255,8 @@ private fun getOpenApiOptions(appProperties: AppProperties): OpenApiOptions {
         .description(appProperties.env.projectDescription)
         .contact(Contact().name(appProperties.env.swaggerContactName))
     return OpenApiOptions(applicationInfo)
-        .toJsonMapper(JacksonToJsonMapper)
-        .modelConverterFactory(JacksonModelConverterFactory)
+        .toJsonMapper(JacksonToJsonMapper())
+        .modelConverterFactory(JacksonModelConverterFactory())
         .roles(SecurityUtil.roles(Roles.AUTHENTICATED))
         .activateAnnotationScanningFor(ApiConstants.ROOT_PACKAGE)
         .swagger(SwaggerOptions(appProperties.env.swaggerContextPath).title(appProperties.env.projectName))

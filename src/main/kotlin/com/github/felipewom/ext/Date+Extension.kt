@@ -3,12 +3,14 @@
 package com.github.felipewom.ext
 
 import com.github.felipewom.commons.ApiConstants
+import com.github.felipewom.commons.logger
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
 import java.util.*
 
@@ -41,15 +43,42 @@ fun DateTime.toISO8601UTC(): String {
 
 
 fun Date.toISO8601DefaultTimeZone(): String {
-    val tz = TimeZone.getTimeZone(DEFAULT_TIMEZONE)
-    val df = SimpleDateFormat(ISO8601_PATTERN)
-    df.timeZone = tz
-    return df.format(this)
+    try {
+        val tz = TimeZone.getTimeZone(ApiConstants.TZ_UTC)
+        val df = SimpleDateFormat(ISO8601_PATTERN)
+        df.timeZone = tz
+        return df.format(this)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        logger.error("Date.toISO8601DefaultTimeZone:: CAN'T PARSE DATE ${this}")
+    }
+    return this.toString()
 }
 
-fun DateTime.toISO8601DefaultTimeZone(): String {
-    return this.toString(ISO8601_PATTERN)
+
+fun DateTime.toISO8601DefaultTimeZone(): String? {
+    try {
+        val tz = TimeZone.getTimeZone(ApiConstants.TZ_UTC)
+        val df = SimpleDateFormat(ISO8601_PATTERN)
+        df.timeZone = tz
+        return df.format(this.toDate())
+    } catch (e: Exception) {
+        e.printStackTrace()
+        logger.error("DateTime.toISO8601DefaultTimeZone:: CAN'T PARSE DATE ${this}")
+    }
+    return null
 }
+
+
+fun formatDateTime(str: String): String {
+    val tz = TimeZone.getTimeZone(ApiConstants.TZ_UTC)
+    val df = SimpleDateFormat(ISO8601_PATTERN)
+    var dt: Date? = null
+    df.timeZone = tz
+    dt = df.parse(str)
+    return df.format(dt)
+}
+
 
 fun String.fromISO8601UTC(): Date? {
     val tz = TimeZone.getTimeZone(com.github.felipewom.commons.ApiConstants.TZ_UTC)
@@ -64,11 +93,16 @@ fun String.fromISO8601UTC(): Date? {
 }
 
 fun currentTimeEpoch(): Long {
-    return Instant.ofEpochMilli(Calendar.getInstance(TimeZone.getTimeZone(DEFAULT_TIMEZONE)).timeInMillis).toEpochMilli()
+    return Instant.ofEpochMilli(Calendar.getInstance(TimeZone.getTimeZone(DEFAULT_TIMEZONE)).timeInMillis)
+        .toEpochMilli()
 }
 
 fun currentDate(timeZone: String? = DEFAULT_TIMEZONE): Date {
     return Calendar.getInstance(TimeZone.getTimeZone(timeZone)).time
+}
+
+fun currentDateTime(timeZone: String? = DEFAULT_TIMEZONE): DateTime {
+    return DateTime(Calendar.getInstance(TimeZone.getTimeZone(timeZone)).time).toDateTimeISO()
 }
 
 fun currentCalendar(timeZone: String? = DEFAULT_TIMEZONE): Calendar {
@@ -76,3 +110,24 @@ fun currentCalendar(timeZone: String? = DEFAULT_TIMEZONE): Calendar {
 }
 
 fun currentTimeISO() = currentDate().toISO8601UTC()
+
+
+fun Date.atStartOfDay(): Date {
+    val localDateTime = this.toLocalDateTime()
+    val startOfDay = localDateTime.with(LocalTime.MIN)
+    return Date.from((startOfDay.atZone(ZoneId.of(DEFAULT_TIMEZONE)).toInstant()))
+}
+
+fun Date.atEndOfDay(): Date {
+    val localDateTime = this.toLocalDateTime()
+    val endOfDay = localDateTime.with(LocalTime.MAX)
+    return Date.from((endOfDay.atZone(ZoneId.of(DEFAULT_TIMEZONE)).toInstant()))
+}
+
+fun Date.toLocalDateTime(): LocalDateTime {
+    return LocalDateTime.ofInstant(this.toInstant(), ZoneId.of(DEFAULT_TIMEZONE))
+}
+
+private fun localDateTimeToDate(localDateTime: LocalDateTime): Date {
+    return Date.from(localDateTime.atZone(ZoneId.of(DEFAULT_TIMEZONE)).toInstant())
+}

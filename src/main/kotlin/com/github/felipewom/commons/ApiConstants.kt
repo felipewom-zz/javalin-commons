@@ -2,6 +2,7 @@
 package com.github.felipewom.commons
 
 import com.github.felipewom.ext.getEnvironmentProp
+import com.github.felipewom.ext.getPropertyOrNull
 
 object ApiConstants {
 
@@ -27,7 +28,7 @@ object ApiConstants {
     const val ID: String = "id"
     const val PARAM_SEPARATOR = "§" // ¤ ∞
     @JvmStatic
-    val ROOT_PACKAGE = getEnvironmentProp("ROOT_PACKAGE") ?: "com.github.felipewom"
+    val ROOT_PACKAGE = getPropertyOrNull<String>("ROOT_PACKAGE") ?: "com.github.felipewom"
     @JvmStatic
     val DB_SCHEMA = getEnvironmentProp("DB_SCHEMA")
 

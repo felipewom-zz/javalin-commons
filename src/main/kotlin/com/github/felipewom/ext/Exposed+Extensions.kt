@@ -1,12 +1,14 @@
 package com.github.felipewom.ext
 
-import com.github.felipewom.commons.*
+import com.github.felipewom.commons.PageableExposed
+import com.github.felipewom.commons.PageableFields
+import com.github.felipewom.commons.Slf4jSqlLogger
+import com.github.felipewom.commons.logger
 import com.github.felipewom.utils.GsonUtils
 import org.jetbrains.exposed.dao.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.koin.core.context.GlobalContext
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -93,7 +95,7 @@ infix fun <T, S1 : T?, S2 : T?> Expression<in S1>.inExpr(other: Expression<in S2
 
 
 fun <T> connectionTransactionNone(block: Transaction.() -> T): T {
-    val dataSource by GlobalContext.get().koin.inject<DataSource>()
+    val dataSource by injectDependency<DataSource>()
     val database = Database.connect(dataSource)
     return transaction(Connection.TRANSACTION_NONE, 0, database) {
         addLogger(Slf4jSqlLogger)
@@ -104,7 +106,7 @@ fun <T> connectionTransactionNone(block: Transaction.() -> T): T {
 }
 
 private fun <T> connectionTransactionSafe(isolationLevel: Int, block: Transaction.() -> T): T {
-    val dataSource by GlobalContext.get().koin.inject<DataSource>()
+    val dataSource by injectDependency<DataSource>()
     val database = Database.connect(dataSource)
     var transaction: Transaction? = null
     var connection: Connection? = null

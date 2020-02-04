@@ -15,7 +15,7 @@ import com.github.kittinunf.fuel.httpGet
 
 class HttpClient {
     init {
-        FuelManager.instance.baseHeaders = mapOf(com.github.felipewom.commons.ApiConstants.CONTENT_TYPE_JSON, com.github.felipewom.commons.ApiConstants.ACCEPT_JSON)
+        FuelManager.instance.baseHeaders = mapOf(ApiConstants.CONTENT_TYPE_JSON, ApiConstants.ACCEPT_JSON)
     }
 
     fun <T> get(
@@ -32,7 +32,7 @@ class HttpClient {
             req.authentication().bearer(it)
         }
         ssoToken?.let {
-            req.appendHeader(com.github.felipewom.commons.ApiConstants.COOKIE, it)
+            req.appendHeader(ApiConstants.COOKIE, it)
         }
         params?.let {
             req.parameters = params.toList()
@@ -91,7 +91,7 @@ class HttpClient {
             req.authentication().bearer(it)
         }
         ssoToken?.let {
-            req.appendHeader(com.github.felipewom.commons.ApiConstants.COOKIE, it)
+            req.appendHeader(ApiConstants.COOKIE, it)
         }
         params?.let {
             req.parameters = params.toList()
@@ -123,7 +123,7 @@ class HttpClient {
             req.authentication().bearer(it)
         }
         ssoToken?.let {
-            req.appendHeader(com.github.felipewom.commons.ApiConstants.COOKIE, it)
+            req.appendHeader(ApiConstants.COOKIE, it)
         }
         params?.let {
             req.parameters = params.toList()
@@ -154,7 +154,7 @@ class HttpClient {
             req.authentication().bearer(it)
         }
         ssoToken?.let {
-            req.appendHeader(com.github.felipewom.commons.ApiConstants.COOKIE, it)
+            req.appendHeader(ApiConstants.COOKIE, it)
         }
         params?.let {
             req.parameters = params.toList()

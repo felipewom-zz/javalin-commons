@@ -17,6 +17,17 @@ inline fun <reified T> getVariable(key: String): T? {
     return variable as T?
 }
 
+inline fun <reified T> getEnvProp(defaultValue: T, vararg keys: String): T {
+    return try {
+        checkVariables<T>(
+            defaultValue,
+            *keys
+        )
+    } catch (e: Exception) {
+        defaultValue
+    }
+}
+
 fun getEnvProp(scope: Scope, defaultValue: Int, vararg keys: String): Int {
     return try {
         checkVariables(
@@ -53,6 +64,7 @@ fun getEnvProp(scope: Scope, defaultValue: Boolean, vararg keys: String): Boolea
     }
 }
 
+
 inline fun <reified T> checkVariables(
     scope: Scope,
     defaultValue: T,
@@ -69,6 +81,25 @@ inline fun <reified T> checkVariables(
         }
         if (found != null) {
             return function(found)
+        }
+    }
+    return defaultValue
+}
+
+inline fun <reified T> checkVariables(
+    defaultValue: T,
+    vararg keys: String
+): T {
+    for (key in keys) {
+        val systemProp = getVariable<T>(key)
+        val applicationProp = getPropertyOrNull<T>(key)
+        val found = when {
+            systemProp != null && systemProp.toString().isNotBlank() -> systemProp
+            applicationProp != null -> applicationProp
+            else -> null
+        }
+        if (found != null) {
+            return found
         }
     }
     return defaultValue

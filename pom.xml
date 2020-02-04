@@ -6,7 +6,7 @@
     <artifactId>javalin-commons</artifactId>
     <name>Javalin Commons Library</name>
     <description>Commons extensions to help Javalin Development</description>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <packaging>jar</packaging>
     <url>https://github.com/felipewom/javalin-commons</url>
     <organization>
@@ -53,9 +53,10 @@
         </developer>
     </developers>
     <properties>
-        <javalin_version>3.5.0</javalin_version>
-        <gson_version>2.8.5</gson_version>
-        <slf4j_version>1.7.26</slf4j_version>
+        <javalin_version>3.7.0</javalin_version>
+        <gson_version>2.8.6</gson_version>
+        <log4j_version>1.2.17</log4j_version>
+        <slf4j_version>1.7.30</slf4j_version>
         <fuel_version>2.2.1</fuel_version>
         <koin_version>2.0.1</koin_version>
         <exposed_version>0.17.5</exposed_version>
@@ -86,7 +87,7 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-core</artifactId>
-            <version>1.3.2</version>
+            <version>1.3.3</version>
         </dependency>
         <!--javalin-->
         <dependency>
@@ -98,7 +99,7 @@
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-core</artifactId>
-            <version>2.0.9</version>
+            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>cc.vileda</groupId>
@@ -108,17 +109,17 @@
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>swagger-ui</artifactId>
-            <version>3.23.8</version>
+            <version>3.24.3</version>
         </dependency>
         <dependency>
             <groupId>io.github.classgraph</groupId>
             <artifactId>classgraph</artifactId>
-            <version>4.8.47</version>
+            <version>4.8.59</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
-            <version>2.9.9</version>
+            <version>2.10.1</version>
         </dependency>
         <!--gson-->
         <dependency>
@@ -150,6 +151,11 @@
             <version>${fuel_version}</version>
         </dependency>
         <!--logs-->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j_version}</version>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
@@ -312,7 +318,6 @@
                         <packageOptions>
                             <!-- Will match kotlin and all sub-packages of it -->
                             <prefix>kotlin</prefix>
-
                             <!-- All options are optional, default values are below: -->
                             <skipDeprecated>false</skipDeprecated>
                             <!-- Emit warnings about not documented members  -->
