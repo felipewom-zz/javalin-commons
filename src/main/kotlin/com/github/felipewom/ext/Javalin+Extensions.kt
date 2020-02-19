@@ -6,7 +6,7 @@ import com.github.felipewom.i18n.I18nProvider
 import com.github.felipewom.i18n.I18nPtBRDefault
 import com.github.felipewom.security.Roles
 import com.github.felipewom.springboot.HealthHandler
-import com.github.felipewom.utils.GsonUtils
+import com.github.felipewom.utils.gson.GsonUtils
 import com.github.felipewom.utils.gson.ListOfJson
 import com.google.gson.Gson
 import io.javalin.Javalin
@@ -93,7 +93,7 @@ fun Context.created(value: Any? = null) = this.status(HttpStatus.CREATED_201).js
 fun Context.badRequest(message: String? = I18nKeys.error_bad_request) {
     val responseMessage = this.getI18n(message ?: I18nKeys.error_bad_request)
     this.json(
-        ErrorResponse(
+        ResponseError(
             errors = mapOf(ApiConstants.BAD_REQUEST_400 to listOf(responseMessage))
         )
     ).status(HttpStatus.BAD_REQUEST_400)
@@ -102,7 +102,7 @@ fun Context.badRequest(message: String? = I18nKeys.error_bad_request) {
 fun Context.badCredentials(message: String? = I18nKeys.error_bad_credentials) {
     val responseMessage = this.getI18n(message ?: I18nKeys.error_bad_credentials)
     this.json(
-        ErrorResponse(
+        ResponseError(
             errors = mapOf(ApiConstants.UNAUTHORIZED_401 to listOf(responseMessage))
         )
     ).status(HttpStatus.UNAUTHORIZED_401)
@@ -112,12 +112,12 @@ fun Context.failureWith(error: ResultHandler.Failure?) {
     if (error == null) {
         return this.badRequest()
     }
-    return when (error.throwable) {
-        is UnauthorizedResponse -> this.badCredentials(error.message)
+    return when {
+        error.throwable is UnauthorizedResponse -> this.badCredentials(error.message)
+        error.message.isNotNullOrBlank() -> this.badRequest(error.message)
         else -> this.badRequest()
     }
 }
-
 
 fun Context.getCookie(): String {
     val cookieMap = this.cookieMap()
@@ -194,7 +194,7 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
         ctx.register(PageableExposed::class.java, ctx.deserializePageableExposed())
     }
     javalin.routes {
-        anonymousRoutes.also { route ->
+        anonymousRoutes.also { anonymous ->
             ApiBuilder.get(
                 "ping",
                 io.javalin.plugin.openapi.dsl.documented(
@@ -204,23 +204,38 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
                             applyUpdates = {
                                 val mediaType = MediaType()
                                 mediaType.example = "pong!"
-                                it.content = Content().addMediaType("text/html", mediaType)
+                                it.content = Content().addMediaType(ApiConstants.TEXT_PLAIN_MIME, mediaType)
                             }
                         )
                 ) { it.result("pong!") },
-                route
+                anonymous
             )
             ApiBuilder.path("admin") {
-                ApiBuilder.get("info", HealthHandler::info, route)
+                ApiBuilder.get(
+                    "info",
+                    io.javalin.plugin.openapi.dsl.documented(
+                        documentation = OpenApiDocumentation()
+                            .result<String>(
+                                status = "${HttpStatus.OK_200}",
+                                applyUpdates = {
+                                    val mediaType = MediaType()
+                                    mediaType.example = "{'status': 'up!'}"
+                                    it.content = Content().addMediaType(ApiConstants.JSON_MIME, mediaType)
+                                }
+                            ),
+                        handle = { HealthHandler.info(it) }
+                    ),
+                    anonymous
+                )
             }
         }
     }
     javalin.after { ctx ->
-        ctx.header("Server", "Powered by ${getProperty<String>("powered_by")}")
+        ctx.header("Server", "Powered by ${getProperty("powered_by", "Javalin")}")
         ctx.header(ApiConstants.API_VERSION_HEADER, appProperties.env.projectVersion)
     }
     javalin.events {
-        it.serverStarting {
+        it.serverStarted {
             logger.info("Server is starting in ${appProperties.env.stage.toUpperCase()}")
             logger.info("____________________________________________________")
             appProperties.env.print()
@@ -228,7 +243,7 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
             logger.info("DEFAULT_TIMEZONE:${DEFAULT_TIMEZONE}")
             logger.info("____________________________________________________")
         }
-        it.serverStopping {
+        it.serverStopped {
             stopKoin()
         }
     }
@@ -237,14 +252,11 @@ fun configureJavalinServer(appDeclaration: JavalinConfig.() -> Unit): Javalin {
 
 fun Context.isPermittedRoute(permittedRoles: Set<Role>): Boolean {
     val appProperties: AppProperties by injectDependency()
-    val isSwaggerAvailable = appProperties.env.isDev() && (
-            this.path().equals(
-                appProperties.env.context + ApiConstants.OVERVIEW_PATH,
-                true
-            ) ||
-                    this.path().equals(appProperties.env.swaggerContextPath, true) ||
-                    this.path().equals(appProperties.env.swaggerJsonPath, true)
-            )
+    val isSwaggerAvailable = appProperties.env.isDev() && (listOf(
+        appProperties.env.context + ApiConstants.OVERVIEW_PATH,
+        appProperties.env.swaggerContextPath,
+        appProperties.env.swaggerJsonPath
+    ).contains(this.path()))
     return isSwaggerAvailable || permittedRoles.contains(Roles.ANYONE)
 }
 
@@ -261,7 +273,7 @@ private fun getOpenApiOptions(appProperties: AppProperties): OpenApiOptions {
         .activateAnnotationScanningFor(ApiConstants.ROOT_PACKAGE)
         .swagger(SwaggerOptions(appProperties.env.swaggerContextPath).title(appProperties.env.projectName))
         .defaultDocumentation { documentation ->
-            documentation.json<ErrorResponse>(I18nPtBRDefault.translate.getValue(I18nKeys.error_unknow_server_error))
+            documentation.json<ResponseError>(I18nPtBRDefault.translate.getValue(I18nKeys.error_unknow_server_error))
         }
         .path(appProperties.env.swaggerJsonPath)
 }
@@ -289,7 +301,7 @@ fun Javalin.registerExceptionHandlers() {
         if (e.localizedMessage != errorMessage) {
             errorList.add(e.localizedMessage)
         }
-        val error = ErrorResponse(mapOf("InternalServerError" to errorList))
+        val error = ResponseError(mapOf("InternalServerError" to errorList))
         ctx.json(error).status(HttpStatus.INTERNAL_SERVER_ERROR_500)
     }
     this.exception(Exception::class.java) { e, ctx ->
@@ -299,7 +311,7 @@ fun Javalin.registerExceptionHandlers() {
         if (e.localizedMessage != errorMessage) {
             errorList.add(e.localizedMessage)
         }
-        val error = ErrorResponse(mapOf("InternalServerError" to errorList))
+        val error = ResponseError(mapOf("InternalServerError" to errorList))
         ctx.json(error).status(HttpStatus.INTERNAL_SERVER_ERROR_500)
     }
     this.exception(ExposedSQLException::class.java) { e, ctx ->
@@ -309,7 +321,7 @@ fun Javalin.registerExceptionHandlers() {
         if (e.localizedMessage != errorMessage) {
             errorList.add(e.localizedMessage)
         }
-        val error = ErrorResponse(mapOf("InternalServerError" to errorList))
+        val error = ResponseError(mapOf("InternalServerError" to errorList))
         ctx.json(error).status(HttpStatus.INTERNAL_SERVER_ERROR_500)
     }
     this.exception(SecurityException::class.java) { e, ctx ->
@@ -319,7 +331,7 @@ fun Javalin.registerExceptionHandlers() {
         if (e.localizedMessage != errorMessage) {
             errorList.add(e.localizedMessage)
         }
-        val error = ErrorResponse(mapOf("SecurityException" to errorList))
+        val error = ResponseError(mapOf("SecurityException" to errorList))
         ctx.json(error).status(HttpStatus.UNAUTHORIZED_401)
     }
     this.exception(UnauthorizedResponse::class.java) { e, ctx ->
@@ -329,7 +341,7 @@ fun Javalin.registerExceptionHandlers() {
         if (e.localizedMessage != errorMessage) {
             errorList.add(e.localizedMessage)
         }
-        val error = ErrorResponse(mapOf("Unauthorized" to errorList))
+        val error = ResponseError(mapOf("Unauthorized" to errorList))
         ctx.json(error).status(HttpStatus.UNAUTHORIZED_401)
     }
     this.exception(ForbiddenResponse::class.java) { e, ctx ->
@@ -339,7 +351,7 @@ fun Javalin.registerExceptionHandlers() {
         if (e.localizedMessage != errorMessage) {
             errorList.add(e.localizedMessage)
         }
-        val error = ErrorResponse(mapOf("Forbidden" to errorList))
+        val error = ResponseError(mapOf("Forbidden" to errorList))
         ctx.json(error).status(HttpStatus.FORBIDDEN_403)
     }
     this.exception(BadRequestResponse::class.java) { e, ctx ->
@@ -349,7 +361,7 @@ fun Javalin.registerExceptionHandlers() {
         if (e.localizedMessage != errorMessage) {
             errorList.add(e.localizedMessage)
         }
-        val error = ErrorResponse(mapOf("BadRequest" to errorList))
+        val error = ResponseError(mapOf("BadRequest" to errorList))
         ctx.json(error).status(HttpStatus.BAD_REQUEST_400)
     }
     this.exception(UnknownObjectException::class.java) { e, ctx ->
@@ -359,7 +371,7 @@ fun Javalin.registerExceptionHandlers() {
         if (e.localizedMessage != errorMessage) {
             errorList.add(e.localizedMessage)
         }
-        val error = ErrorResponse(mapOf("UnknownObject" to errorList))
+        val error = ResponseError(mapOf("UnknownObject" to errorList))
         ctx.json(error).status(HttpStatus.UNPROCESSABLE_ENTITY_422)
     }
     this.exception(NotFoundResponse::class.java) { e, ctx ->
@@ -369,7 +381,7 @@ fun Javalin.registerExceptionHandlers() {
         if (e.localizedMessage != errorMessage) {
             errorList.add(e.localizedMessage)
         }
-        val error = ErrorResponse(mapOf("NotFound" to errorList))
+        val error = ResponseError(mapOf("NotFound" to errorList))
         ctx.json(error).status(HttpStatus.NOT_FOUND_404)
     }
     this.exception(HttpResponseException::class.java) { e, ctx ->
@@ -382,7 +394,7 @@ fun Javalin.registerExceptionHandlers() {
         val errorMap = mutableMapOf(
             "ErrorResponse" to errorList,
             "Details" to e.details.map { it.key to listOf(it.value) }.flatMap { it.second })
-        val error = ErrorResponse(errorMap)
+        val error = ResponseError(errorMap)
         ctx.json(error).status(e.status)
     }
 }

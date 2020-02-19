@@ -1,5 +1,5 @@
 @file:JvmName("GsonUtils")
-package com.github.felipewom.utils
+package com.github.felipewom.utils.gson
 
 import com.github.felipewom.commons.logger
 import com.github.felipewom.ext.ISO8601_PATTERN

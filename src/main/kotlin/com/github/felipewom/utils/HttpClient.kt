@@ -5,6 +5,7 @@ import com.github.felipewom.commons.ApiConstants
 import com.github.felipewom.commons.ResultHandler
 import com.github.felipewom.ext.failureWith
 import com.github.felipewom.ext.tryResult
+import com.github.felipewom.utils.gson.GsonUtils
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelManager
 

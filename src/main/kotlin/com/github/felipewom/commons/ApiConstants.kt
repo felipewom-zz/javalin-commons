@@ -23,9 +23,10 @@ object ApiConstants {
     const val OVERVIEW_PATH = "/overview"
     const val TZ_SAO_PAULO = "America/Sao_Paulo"
     const val TZ_UTC = "UTC"
-    const val CREATED_AT = "created_at"
-    const val UPDATED_AT = "updated_at"
+    const val COLUMN_CREATED_AT = "created_at"
+    const val COLUMN_UPDATED_AT = "updated_at"
     const val ID: String = "id"
+    const val PARAM_ID: String = "/:id"
     const val PARAM_SEPARATOR = "§" // ¤ ∞
     @JvmStatic
     val ROOT_PACKAGE = getPropertyOrNull<String>("ROOT_PACKAGE") ?: "com.github.felipewom"
@@ -65,6 +66,8 @@ object ApiConstants {
     const val SESSION_COOKIE = "__session"
     const val API_VERSION_HEADER = "Api-Version"
     const val JSON_MIME = "application/json"
+    const val TEXT_HTML_MIME = "text/html"
+    const val TEXT_PLAIN_MIME = "text/plain"
     val ACCEPT_JSON = Pair(
         ACCEPT, JSON_MIME
     )
@@ -76,4 +79,7 @@ object ApiConstants {
     /*HTTP STATUS*/
     const val BAD_REQUEST_400 = "BAD_REQUEST_400"
     const val UNAUTHORIZED_401 = "UNAUTHORIZED_401"
+
+    const val CONTROLLER_SUFFIX: String = "controller"
+    const val SERVICE_SUFFIX: String = "service"
 }

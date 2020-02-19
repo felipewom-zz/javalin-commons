@@ -131,3 +131,10 @@ fun Date.toLocalDateTime(): LocalDateTime {
 private fun localDateTimeToDate(localDateTime: LocalDateTime): Date {
     return Date.from(localDateTime.atZone(ZoneId.of(DEFAULT_TIMEZONE)).toInstant())
 }
+fun currentEpochMillisUTC() : Long {
+    return Instant.ofEpochMilli(Calendar.getInstance(TimeZone.getTimeZone(ApiConstants.TZ_UTC)).timeInMillis).toEpochMilli()
+}
+
+fun currentEpochSecondUTC() : Long {
+    return Instant.ofEpochMilli(Calendar.getInstance(TimeZone.getTimeZone(ApiConstants.TZ_UTC)).timeInMillis).epochSecond
+}

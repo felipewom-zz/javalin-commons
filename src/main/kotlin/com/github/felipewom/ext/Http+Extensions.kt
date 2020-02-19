@@ -5,7 +5,7 @@ import com.github.kittinunf.fuel.core.Response
 import org.eclipse.jetty.http.HttpStatus
 
 
-fun <T> Response.failureWith(): ResultHandler<T> {
+fun <T> Response.failureWith(): ResultHandler<T> = tryResult {
     return when (this.statusCode) {
         401 -> ResultHandler.failure("${this.body().asString(com.github.felipewom.commons.ApiConstants.JSON_MIME)} -> ${HttpStatus.UNAUTHORIZED_401} ${this.responseMessage}")
         404 -> ResultHandler.failure("${this.body().asString(com.github.felipewom.commons.ApiConstants.JSON_MIME)} -> ${HttpStatus.NOT_FOUND_404} ${this.responseMessage}")

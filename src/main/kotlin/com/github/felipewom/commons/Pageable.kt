@@ -1,26 +1,27 @@
 @file:JvmName("Pageable")
+
 package com.github.felipewom.commons
 
 import com.github.felipewom.ext.isNotNullOrBlank
-import com.github.felipewom.ext.tryOrNull
-import com.github.felipewom.utils.GsonUtils.deserialize
-import com.google.gson.annotations.Expose
 import io.javalin.http.Context
 
 /**
  * Data class for pagination information.
  * @author Felipe Moura
  */
-open class Pageable(@Expose(deserialize = false) var totalSize: Int = 0 ) {
+open class Pageable {
 
-    constructor() : this(0)
-    constructor(ctx: Context): this(0){
+    constructor()
+    constructor(ctx: Context) : this() {
         this.pageNumber = ctx.queryParam(PageableFields.PAGE_NUMBER)?.toInt() ?: 1
         this.pageSize = ctx.queryParam(PageableFields.PAGE_SIZE)?.toInt() ?: 20
         this.orderBy = ctx.queryParam(PageableFields.ORDER_BY)
         this.filter = ctx.queryParam(PageableFields.FILTER)
         this.objectFilter = ctx.queryParam(PageableFields.OBJECT_FILTER)
+        this.totalSize = 0
     }
+
+    var totalSize: Int = 0
 
     /**
      * Page number requested.
@@ -105,14 +106,4 @@ open class Pageable(@Expose(deserialize = false) var totalSize: Int = 0 ) {
             field = null
         }
 
-    /**
-     * Returns the DTO requested.
-     * @return
-     */
-    inline fun <DTO> getObjectFilter(clzz: Class<DTO>): DTO? = tryOrNull {
-        if (objectFilter != null) {
-            return deserialize(objectFilter!!, clzz)
-        }
-        return null
-    }
 }

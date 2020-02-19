@@ -4,7 +4,7 @@ import com.github.felipewom.commons.PageableExposed
 import com.github.felipewom.commons.PageableFields
 import com.github.felipewom.commons.Slf4jSqlLogger
 import com.github.felipewom.commons.logger
-import com.github.felipewom.utils.GsonUtils
+import com.github.felipewom.utils.gson.GsonUtils
 import org.jetbrains.exposed.dao.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -182,8 +182,8 @@ val BaseIntEntity.idValue: Int
 
 
 abstract class BaseUUIDTable(name: String) : UUIDTable(name) {
-    val createdAt = datetime(com.github.felipewom.commons.ApiConstants.CREATED_AT).clientDefault { currentUtc() }
-    val updatedAt = datetime(com.github.felipewom.commons.ApiConstants.UPDATED_AT).nullable()
+    val createdAt = datetime(com.github.felipewom.commons.ApiConstants.COLUMN_CREATED_AT).clientDefault { currentUtc() }
+    val updatedAt = datetime(com.github.felipewom.commons.ApiConstants.COLUMN_UPDATED_AT).nullable()
 }
 
 abstract class BaseUUIDEntity(id: EntityID<UUID>, table: BaseUUIDTable) : UUIDEntity(id) {
